@@ -17,6 +17,13 @@ model User {
   documents    Document[]
 }
 
+enum DocumentProcessingStatus {
+  UPLOADED
+  PROCESSING
+  READY
+  FAILED
+}
+
 model Document {
   id               String   @id @default(uuid())
   userId           String
@@ -25,6 +32,8 @@ model Document {
   filePath         String
   fileSize         Int
   mimeType         String
+  processingStatus DocumentProcessingStatus @default(UPLOADED)
+  processingError  String?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
