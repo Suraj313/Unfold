@@ -1,7 +1,9 @@
 import express, { Application } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import cookieParser from 'cookie-parser';
 import healthRoutes from './routes/healthRoutes';
+import authRoutes from './routes/auth.routes';
 
 dotenv.config();
 
@@ -13,8 +15,10 @@ app.use(cors({
 }));
 
 app.use(express.json());
+app.use(cookieParser());
 
 // Routes
 app.use('/api', healthRoutes);
+app.use('/api/auth', authRoutes);
 
 export default app;
