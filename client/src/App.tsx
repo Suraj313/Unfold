@@ -3,6 +3,7 @@ import LandingPage from './pages/LandingPage';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import AppWorkspace from './pages/AppWorkspace';
+import DesignSystem from './pages/DesignSystem';
 
 function App() {
   return (
@@ -12,6 +13,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/app" element={<AppWorkspace />} />
+        <Route path="/design-system" element={<DesignSystem />} />
       </Routes>
     </Router>
   );
