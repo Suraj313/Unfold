@@ -2,9 +2,11 @@ node_modules/
 .env
 .env.*
 !.env.example
+!.env.docker.example
 dist/
 build/
 coverage/
 .vscode/
 .DS_Store
 server/uploads/
+server/backups/
