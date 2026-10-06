@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import healthRoutes from './routes/healthRoutes';
 import authRoutes from './routes/auth.routes';
+import documentRoutes from './routes/document.routes';
 
 dotenv.config();
 
@@ -20,5 +21,6 @@ app.use(cookieParser());
 // Routes
 app.use('/api', healthRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/documents', documentRoutes);
 
 export default app;
