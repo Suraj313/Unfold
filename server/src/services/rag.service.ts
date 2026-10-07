@@ -21,6 +21,10 @@ export interface RagAnswer {
   sources: RagSource[];
 }
 
+// Empirically chosen initial threshold for the current nomic-embed-text setup.
+// May need recalibration for other embedding models/documents.
+const MIN_RAG_SIMILARITY = 0.50;
+
 const SYSTEM_PROMPT = `You are a helpful and precise study assistant.
 Your task is to answer the student's question based ONLY on the provided document context.
 
@@ -79,8 +83,10 @@ export async function answerQuestion({
       documentId,
     });
 
+    const filteredChunks = chunks.filter(c => c.similarity >= MIN_RAG_SIMILARITY);
+
     // 2. Map sources for the client response
-    const sources: RagSource[] = chunks.map((chunk) => ({
+    const sources: RagSource[] = filteredChunks.map((chunk) => ({
       documentId: chunk.documentId,
       documentTitle: chunk.documentTitle,
       pageNumber: chunk.pageNumber,
@@ -89,7 +95,7 @@ export async function answerQuestion({
     }));
 
     // 3. Early return if no context is found (saving API calls)
-    if (chunks.length === 0) {
+    if (filteredChunks.length === 0) {
       return {
         answer: "I cannot determine the answer from the uploaded material because no relevant information was found.",
         sources: [],
@@ -97,7 +103,7 @@ export async function answerQuestion({
     }
 
     // 4. Build context and user prompt
-    const documentContext = formatContext(chunks);
+    const documentContext = formatContext(filteredChunks);
     const userPrompt = `${documentContext}\n\nStudent Question: ${trimmedQuery}`;
 
     // 5. Generate Grounded Answer
