@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import fs from 'fs';
 import * as DocumentService from '../services/document.service';
 import { processDocument } from '../services/document-processing.service';
 import prisma from '../lib/prisma';
@@ -32,6 +33,13 @@ export const uploadDocument = async (req: Request, res: Response): Promise<any> 
     } catch (processingError) {
       console.error('Document processing failed:', processingError);
       // We don't fail the upload response; we just log it. The client will see processingStatus = FAILED.
+      if (fs.existsSync(filePath)) {
+        try {
+          fs.unlinkSync(filePath);
+        } catch (cleanupError) {
+          console.error('Failed to clean up orphaned PDF:', cleanupError);
+        }
+      }
     }
 
     // Fetch the final document state to return to client
