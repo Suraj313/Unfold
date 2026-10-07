@@ -7,6 +7,7 @@ import authRoutes from './routes/auth.routes';
 import documentRoutes from './routes/document.routes';
 import searchRoutes from './routes/search.routes';
 import chatRoutes from './routes/chat.routes';
+import practiceRoutes from './routes/practice.routes';
 
 dotenv.config();
 
@@ -26,5 +27,6 @@ app.use('/api/auth', authRoutes);
 app.use('/api/documents', documentRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/chat', chatRoutes);
+app.use('/api/practice', practiceRoutes);
 
 export default app;

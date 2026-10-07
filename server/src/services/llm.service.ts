@@ -9,9 +9,10 @@ const groq = new Groq({
  * 
  * @param systemPrompt - The system instructions (e.g., RAG constraints).
  * @param userPrompt - The user's specific query.
+ * @param jsonMode - Whether to request JSON object format from the LLM.
  * @returns The generated string answer.
  */
-export async function generateAnswer(systemPrompt: string, userPrompt: string): Promise<string> {
+export async function generateAnswer(systemPrompt: string, userPrompt: string, jsonMode: boolean = false): Promise<string> {
   if (!systemPrompt || !systemPrompt.trim()) {
     throw new Error('System prompt is required to generate an answer.');
   }
@@ -35,6 +36,7 @@ export async function generateAnswer(systemPrompt: string, userPrompt: string): 
       model: 'openai/gpt-oss-120b',
       temperature: 0.1, // Low temperature for grounded, deterministic RAG answers
       max_tokens: 2000,
+      response_format: jsonMode ? { type: 'json_object' } : undefined,
     });
 
     const answer = response.choices[0]?.message?.content;

@@ -4,6 +4,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import AppWorkspace from './pages/AppWorkspace';
 import AskAIPage from './pages/AskAIPage';
+import PracticePage from './pages/PracticePage';
 import DesignSystem from './pages/DesignSystem';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
@@ -27,6 +28,14 @@ function App() {
           element={
             <ProtectedRoute>
               <AskAIPage />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/app/practice" 
+          element={
+            <ProtectedRoute>
+              <PracticePage />
             </ProtectedRoute>
           } 
         />

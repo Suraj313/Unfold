@@ -46,10 +46,10 @@ export const Sidebar = () => {
               <Search className="h-4 w-4" />
               Ask AI
             </Link>
-            <button className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-sm font-medium text-text-main hover:bg-white hover:text-primary transition-colors">
+            <Link to="/app/practice" className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-sm font-medium text-text-main hover:bg-white hover:text-primary transition-colors">
               <BookCheck className="h-4 w-4" />
               Practice
-            </button>
+            </Link>
           </div>
         </div>
       </div>
