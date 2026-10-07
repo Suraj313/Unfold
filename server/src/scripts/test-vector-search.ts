@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { searchSimilarChunks } from '../services/vector-search.service';
 import 'dotenv/config';
 
 const prisma = new PrismaClient();
@@ -16,15 +17,6 @@ async function runTest() {
     }
 
     console.log(`Using Document: ${document.id} (Title: ${document.title}) belonging to User: ${document.userId}`);
-
-    if (!process.env.OPENAI_API_KEY) {
-      console.log('\nREAL OPENAI SEARCH TEST = NOT PERFORMED');
-      console.log('Reason: No OPENAI_API_KEY environment variable found. The OpenAI SDK requires it at startup.');
-      return;
-    }
-
-    // Dynamic import to avoid OpenAI initialization crash if key is missing
-    const { searchSimilarChunks } = await import('../services/vector-search.service');
 
     // A. Basic semantic search
     console.log('\n--- A. Basic semantic search ---');

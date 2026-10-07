@@ -47,8 +47,8 @@ async function runTest() {
     if (rawChunks.length > 0) {
       const dim = rawChunks[0].embedding_dim;
       console.log(`Embedding Dimension Verified: ${dim}`);
-      if (dim !== 1536) {
-        console.error(`ERROR: Expected dimension 1536, got ${dim}`);
+      if (dim !== 768) {
+        console.error(`ERROR: Expected dimension 768, got ${dim}`);
       }
     }
 

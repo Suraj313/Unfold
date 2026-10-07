@@ -34,8 +34,9 @@ async function runTest() {
     if (rawChunks.length > 0) {
       const dim = rawChunks[0].embedding_dim;
       console.log(`Stored embedding dimension verified: ${dim}`);
-      if (dim !== 1536) {
-        console.error(`ERROR: Expected dimension 1536, got ${dim}`);
+
+      if (dim !== 768) {
+        console.error(`ERROR: Expected dimension 768, got ${dim}`);
       }
     } else {
       console.error('ERROR: Could not retrieve chunk after processing.');
