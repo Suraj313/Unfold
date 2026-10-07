@@ -21,7 +21,6 @@
     "groq-sdk": "^1.6.0",
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.4.0",
-    "openai": "^7.28.0",
     "pdf.js-extract": "^1.0.1",
     "zod": "^4.6.5"
   },
