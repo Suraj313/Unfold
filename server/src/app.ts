@@ -6,6 +6,7 @@ import healthRoutes from './routes/healthRoutes';
 import authRoutes from './routes/auth.routes';
 import documentRoutes from './routes/document.routes';
 import searchRoutes from './routes/search.routes';
+import chatRoutes from './routes/chat.routes';
 
 dotenv.config();
 
@@ -24,5 +25,6 @@ app.use('/api', healthRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/documents', documentRoutes);
 app.use('/api/search', searchRoutes);
+app.use('/api/chat', chatRoutes);
 
 export default app;
