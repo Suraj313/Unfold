@@ -15,7 +15,12 @@ export const extractPdfText = async (filePath: string): Promise<ExtractedDocumen
     throw new Error(`File not found: ${filePath}`);
   }
 
-  const { PDFExtract } = await import('pdf.js-extract');
+  const importedModule: any = await import('pdf.js-extract');
+  const resolved = importedModule.default instanceof Promise 
+    ? await importedModule.default 
+    : importedModule;
+  const PDFExtract = resolved.PDFExtract || resolved;
+  
   const pdfExtract = new PDFExtract();
   const options: any = {};
 
@@ -26,7 +31,7 @@ export const extractPdfText = async (filePath: string): Promise<ExtractedDocumen
       throw new Error('Failed to extract data or pages array is missing.');
     }
 
-    const pages: ExtractedPage[] = data.pages.map((page, index) => {
+    const pages: ExtractedPage[] = data.pages.map((page: any, index: number) => {
       let pageText = '';
       let lastY: number | null = null;
       
