@@ -70,15 +70,24 @@ export async function generateQuiz({ userId, documentId }: GenerateQuizOptions) 
     throw new Error('Document has no extractable content for a quiz.');
   }
 
-  // 2. Select chunks (distributed across the document)
   let selectedChunks = [];
   if (numChunks <= 5) {
     selectedChunks = document.chunks;
   } else {
-    for (let i = 0; i < 5; i++) {
-      const index = Math.floor(i * (numChunks - 1) / 4);
-      selectedChunks.push(document.chunks[index]);
+    // 1. Copy chunks array to avoid mutating the original
+    const shuffled = [...document.chunks];
+    
+    // 2. Fisher-Yates shuffle
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
+    
+    // 3. Take the first 5 chunks
+    selectedChunks = shuffled.slice(0, 5);
+    
+    // 4. Sort chronologically so context reads naturally to the LLM
+    selectedChunks.sort((a, b) => a.chunkIndex - b.chunkIndex);
   }
 
   // Track valid pages supplied to LLM to prevent hallucinations
