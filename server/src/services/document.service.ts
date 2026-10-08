@@ -1,5 +1,5 @@
 import prisma from '../lib/prisma';
-import fs from 'fs';
+import * as StorageService from './storage.service';
 
 export const createDocument = async (
   userId: string,
@@ -23,12 +23,10 @@ export const createDocument = async (
     return document;
   } catch (error) {
     // Clean up file if database insert fails
-    if (fs.existsSync(filePath)) {
-      try {
-        fs.unlinkSync(filePath);
-      } catch (unlinkError) {
-        console.error(`Failed to delete orphaned file ${filePath}:`, unlinkError);
-      }
+    try {
+      await StorageService.deleteFile(filePath);
+    } catch (cleanupError) {
+      console.error(`Failed to delete orphaned file ${filePath}:`, cleanupError);
     }
     throw error;
   }
@@ -58,12 +56,10 @@ export const deleteDocument = async (documentId: string, userId: string) => {
     where: { id: documentId },
   });
 
-  if (fs.existsSync(document.filePath)) {
-    try {
-      fs.unlinkSync(document.filePath);
-    } catch (error) {
-      console.error(`Failed to delete file from filesystem ${document.filePath}:`, error);
-    }
+  try {
+    await StorageService.deleteFile(document.filePath);
+  } catch (error) {
+    console.error(`Failed to delete file ${document.filePath}:`, error);
   }
 
   return true;

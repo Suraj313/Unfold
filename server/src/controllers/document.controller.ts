@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import fs from 'fs';
 import * as DocumentService from '../services/document.service';
 import { processDocument } from '../services/document-processing.service';
+import * as StorageService from '../services/storage.service';
 import prisma from '../lib/prisma';
 
 export const uploadDocument = async (req: Request, res: Response): Promise<any> => {
@@ -18,40 +19,45 @@ export const uploadDocument = async (req: Request, res: Response): Promise<any> 
     const { originalname, path: filePath, size, mimetype } = req.file;
     const title = req.body.title || originalname;
 
-    const document = await DocumentService.createDocument(
-      user.id,
-      title,
-      originalname,
-      filePath,
-      size,
-      mimetype
-    );
-
-    // Process document synchronously for MVP
     try {
-      await processDocument(document.id);
-    } catch (processingError) {
-      console.error('Document processing failed:', processingError);
-      // We don't fail the upload response; we just log it. The client will see processingStatus = FAILED.
+      const storagePath = await StorageService.uploadFile(filePath, originalname, user.id, mimetype);
+
+      const document = await DocumentService.createDocument(
+        user.id,
+        title,
+        originalname,
+        storagePath,
+        size,
+        mimetype
+      );
+
+      // Process document synchronously for MVP
+      try {
+        await processDocument(document.id, filePath);
+      } catch (processingError) {
+        console.error('Document processing failed:', processingError);
+        // We don't fail the upload response; we just log it. The client will see processingStatus = FAILED.
+      }
+
+      // Fetch the final document state to return to client
+      const finalDocument = await prisma.document.findUnique({
+        where: { id: document.id }
+      });
+
+      return res.status(201).json({
+        success: true,
+        message: 'Document uploaded and processed',
+        data: finalDocument,
+      });
+    } finally {
       if (fs.existsSync(filePath)) {
         try {
           fs.unlinkSync(filePath);
         } catch (cleanupError) {
-          console.error('Failed to clean up orphaned PDF:', cleanupError);
+          console.error('Failed to clean up local Multer PDF:', cleanupError);
         }
       }
     }
-
-    // Fetch the final document state to return to client
-    const finalDocument = await prisma.document.findUnique({
-      where: { id: document.id }
-    });
-
-    return res.status(201).json({
-      success: true,
-      message: 'Document uploaded and processed',
-      data: finalDocument,
-    });
   } catch (error: any) {
     console.error('Error uploading document:', error);
     return res.status(500).json({ success: false, message: 'Internal server error' });
