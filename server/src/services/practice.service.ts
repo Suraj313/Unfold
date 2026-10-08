@@ -124,5 +124,22 @@ export async function generateQuiz({ userId, documentId }: GenerateQuizOptions) 
     }
   }
 
+  // 7. Shuffle options to prevent LLM bias (e.g. always picking option A)
+  for (const q of quiz.questions) {
+    const optionObjects = q.options.map((text, index) => ({
+      text,
+      isCorrect: index === q.correctOptionIndex
+    }));
+
+    // Fisher-Yates shuffle
+    for (let i = optionObjects.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [optionObjects[i], optionObjects[j]] = [optionObjects[j], optionObjects[i]];
+    }
+
+    q.options = optionObjects.map(o => o.text);
+    q.correctOptionIndex = optionObjects.findIndex(o => o.isCorrect);
+  }
+
   return quiz;
 }
