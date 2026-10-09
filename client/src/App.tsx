@@ -5,7 +5,6 @@ import Register from './pages/Register';
 import AppWorkspace from './pages/AppWorkspace';
 import AskAIPage from './pages/AskAIPage';
 import PracticePage from './pages/PracticePage';
-import DesignSystem from './pages/DesignSystem';
 import NotFound from './pages/NotFound';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
@@ -40,7 +39,6 @@ function App() {
             </ProtectedRoute>
           } 
         />
-        <Route path="/design-system" element={<DesignSystem />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Router>
