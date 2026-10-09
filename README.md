@@ -6,6 +6,31 @@ Understand. Verify. Practice.
 
 Unfold is an AI-powered study workspace designed to help students actively engage with their learning materials. Instead of just reading, students can upload their study PDFs, ask questions grounded strictly in their own documents (with exact page-level citations), and automatically generate multiple-choice quizzes to test their understanding. It forms a complete Understand → Verify → Practice learning loop.
 
+## Live Demo
+
+- **Frontend (Try it here):** [https://unfold-2-pqzy.onrender.com](https://unfold-2-pqzy.onrender.com)
+- **Backend (Health Check):** [https://unfold-1.onrender.com/api/health](https://unfold-1.onrender.com/api/health)
+
+*Note: The application is hosted on Render's free tier. The backend may take ~50 seconds to spin up from sleep on your first request.*
+
+## Screenshots
+
+**1. Landing Page**
+![Landing Page](docs/assets/landing-page.png)
+*Modern, responsive landing page highlighting the Understand → Verify → Practice loop.*
+
+**2. Workspace Dashboard**
+![Workspace Dashboard](docs/assets/workspace-dashboard.png)
+*Main dashboard for uploading and managing study materials.*
+
+**3. Ask AI (RAG with Citations)**
+![Ask AI](docs/assets/ask-ai-rag.png)
+*AI Q&A with exact page-level citations grounded in the uploaded document.*
+
+**4. Practice Quiz**
+![Practice Quiz](docs/assets/practice-quiz.png)
+*Auto-generated multiple-choice quizzes to test retention and understanding.*
+
 ## Features
 
 - **PDF Document Upload**: Securely upload study materials with automatic PDF validation and 10MB limits.
@@ -30,12 +55,14 @@ graph TD
     Client[React + Vite Frontend]
     API[Express Backend API]
     DB[(PostgreSQL + pgvector)]
-    Ollama[Local Ollama]
+    Storage[(Supabase / Local Storage)]
+    Embedder[Jina AI / Ollama]
     Groq[Groq API]
 
     Client <-->|REST / JSON| API
     API <-->|SQL| DB
-    API -->|Fetch| Ollama
+    API <-->|Files| Storage
+    API -->|API| Embedder
     API -->|SDK| Groq
 
     subgraph Document Processing
@@ -57,7 +84,7 @@ graph TD
 ## RAG Pipeline
 
 When a user asks a question, the system executes a Retrieval-Augmented Generation (RAG) pipeline:
-1. **Query Embedding**: The user's question is embedded using the local Ollama `nomic-embed-text` model.
+1. **Query Embedding**: The user's question is embedded using the configured provider (Jina AI for production, or Ollama for local offline use).
 2. **Vector Similarity Search**: A secure `pgvector` query retrieves the top-K chunks from the database, strictly scoped to the authenticated user's documents.
 3. **Relevance Threshold**: Chunks with a cosine similarity below `0.50` are discarded to prevent noise.
 4. **Context Construction**: Surviving chunks are assembled into a prompt containing exact page numbers and document text.
@@ -68,8 +95,8 @@ When a user asks a question, the system executes a Retrieval-Augmented Generatio
 
 1. **Extraction**: The PDF is parsed to extract text while explicitly maintaining page boundaries.
 2. **Chunking**: Text is split into chunks of approximately 600 words with a 100-word overlap. Chunks **never cross page boundaries** to guarantee citation accuracy.
-3. **Embeddings**: Chunks are embedded locally via Ollama into 768-dimensional vectors.
-4. **Storage**: Text, metadata, and vectors are saved to PostgreSQL.
+3. **Embeddings**: Chunks are embedded via the configured provider (e.g., Jina AI) into 768-dimensional vectors.
+4. **Storage**: Text, metadata, and vectors are saved to PostgreSQL. The physical PDF is uploaded to Supabase Storage (or local storage during dev).
 5. **State Management**: Documents are tracked via `UPLOADED`, `PROCESSING`, `READY`, and `FAILED` states. Failed uploads safely clean up orphaned physical files.
 
 ## Practice Generation
@@ -93,8 +120,8 @@ When a user asks a question, the system executes a Retrieval-Augmented Generatio
 
 **Frontend:** React, TypeScript, Vite, Tailwind CSS, React Router, Axios, React Markdown.
 **Backend:** Node.js, Express, TypeScript, Prisma, Zod, JWT, bcrypt, Multer, Groq SDK.
-**Database:** PostgreSQL with `pgvector` extension.
-**AI Models:** `nomic-embed-text` (Ollama), `openai/gpt-oss-120b` (Groq).
+**Database & Storage:** PostgreSQL with `pgvector` extension, Supabase Storage.
+**AI Models:** Jina AI (Embeddings), `openai/gpt-oss-120b` (Groq API).
 
 ## Project Structure
 
@@ -125,7 +152,7 @@ Unfold/
 ### Database & Embeddings Setup
 1. Ensure PostgreSQL is running and create a database (e.g., `unfold_db`).
 2. Run `CREATE EXTENSION vector;` in your PostgreSQL database.
-3. Start Ollama and pull the embedding model:
+3. If using local embeddings instead of Jina AI, start Ollama and pull the model:
    ```bash
    ollama run nomic-embed-text
    ```
@@ -161,16 +188,41 @@ Unfold/
 
 **server/.env**
 ```env
+# =====================================================================
+# Unfold Environment Configuration
+# =====================================================================
+# Unfold supports modular infrastructure providers depending on your environment.
+# For local development: Use 'local' storage and 'ollama' embeddings to avoid hosted embedding API costs. Groq is still required for LLM responses.
+# For production: Use 'supabase' storage and 'jina' embeddings for scalable cloud performance.
+
+# Server Configuration
 PORT=8000
 CLIENT_URL=http://localhost:5173
 
-DATABASE_URL="postgresql://user:password@localhost:5432/unfold_db?schema=public"
+# Database Configuration
+# NOTE: This example URL is for local development only.
+# Production database credentials should be configured directly in your hosting
+# provider's environment variables (e.g. Render) and NEVER committed to Git.
+DATABASE_URL="postgresql://postgres:root@localhost:5432/unfold_dev?schema=public"
 
-JWT_SECRET="your_secure_random_string"
+# Authentication
+JWT_SECRET="your_jwt_secret_here"
 
-GROQ_API_KEY="gsk_your_groq_api_key_here"
+# Groq LLM Configuration
+GROQ_API_KEY="your_groq_api_key_here"
 
+# Ollama Configuration
 OLLAMA_BASE_URL=http://localhost:11434
+
+# Embedding Configuration (Providers: 'jina', 'ollama')
+EMBEDDING_PROVIDER=jina
+JINA_API_KEY="your_jina_api_key_here"
+JINA_EMBEDDING_MODEL="jina-embeddings-v5-text-nano"
+
+# Storage Configuration (Providers: 'supabase', 'local')
+STORAGE_PROVIDER=supabase
+SUPABASE_URL="https://your-project.supabase.co"
+SUPABASE_SERVICE_ROLE_KEY="your_supabase_service_role_key"
 ```
 
 ## API Overview
@@ -193,15 +245,11 @@ The current implementation has been manually verified against:
 
 This project is built as a Minimum Viable Product, intentionally accepting the following constraints:
 - **Synchronous Processing**: Document uploads block the HTTP response until extraction and embedding are complete. Very large PDFs may cause timeout errors.
-- **Local Storage**: Uploaded files are stored on the local backend filesystem (`uploads/`), which is unsuitable for ephemeral serverless deployment (e.g., Vercel).
-- **Local Embeddings**: Relies on a local Ollama instance, meaning deployment requires a VM or containerized setup.
 - **Stateless Quizzes**: Quiz history and scores are not saved to the database.
 
 ## Future Improvements (V2)
 
 - **Background Workers**: Implement BullMQ/Redis for asynchronous document processing.
-- **Object Storage**: Migrate PDF uploads to AWS S3 or a compatible blob store.
-- **Hosted Embeddings**: Switch to a hosted API (like OpenAI or Voyage) to remove the heavy local Ollama infrastructure requirement.
 - **Streaming LLM Responses**: Use Server-Sent Events (SSE) in the Ask AI chat to improve perceived latency.
 - **Quiz History**: Add database persistence to track long-term learning progress.
 
